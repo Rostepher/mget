@@ -1,16 +1,14 @@
 require 'zip'
+require_relative '../errors'
 require_relative '../thread_pool'
 
 module MangaGet
     class Scraper
+        include MangaGet::Errors
+
+        # regex defining what image types are used
         IMAGE_NAME_REGEX = /(jpg|jpeg|png)/
         
-        # constants
-        BASE_URL = ''
-        PAGE_IMAGE_XPATH = ''
-        PAGE_SELECT_XPATH = ''
-        CHAPTER_SELECT_XPATH = ''
-
         # getters
         attr_reader :manga
 
@@ -39,15 +37,26 @@ module MangaGet
             raise NotImplementedError
         end
 
+        #
+        # Downloads all chapters in a given list, must only contain Integers.
+        # Each chapter is assigned as a task to a thread in the pool, thus
+        # allowing multiple chapters to be downloaded at once.
+        #
         def get_chapters(list)
-            list.each do |chapter| 
-                @thread_pool.schedule do
-                    get_chapter(chapter)
+            begin
+                list.each do |chapter| 
+                    @thread_pool.schedule do
+                        get_chapter(chapter)
+                    end
                 end
+            rescue MangaNotAvailableError => e
+                exit
             end
         end
 
-
+        #
+        # Helper method to download images from urls to the given path.
+        #
         def download_image(url, path, name)
             match = IMAGE_NAME_REGEX.match(url)
 
@@ -57,6 +66,10 @@ module MangaGet
             end
         end
 
+        #
+        # Zips a directory of images into a cbz archive with the the name
+        # zip_file_name.
+        #
         def zip_chapter(dir, zip_file_name)
             # change directory
             cur_dir = Dir.getwd
@@ -78,12 +91,20 @@ module MangaGet
         
         # helpers
         private
+        #
+        # Helper to sanitize the given chapter number so it is always 3 chars
+        # long, with preceding zeros if the number is too short.
+        #
         def _pad_chapter(chapter)
             chapter.to_s.rjust(3, '0')
         end
        
+        #
+        # Sanitizes name so that all space characters are _ and downcases the
+        # entire string. Makes a string URL ready.
+        #
         def _sanitize_name(name)
-            name.downcase.gsub(/\s/, '_')
+            name.to_s.downcase.gsub(/\s/, '_')
         end
     end
 end

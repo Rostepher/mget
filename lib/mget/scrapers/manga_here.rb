@@ -5,17 +5,23 @@ require_relative 'scraper'
 
 module MangaGet
     class MangaHereScraper < Scraper
-        # constants
+        # base url for mangahere
         BASE_URL = 'http://mangahere.co'
-        IMAGE_NAME_REGEX = /(jpg|jpeg|png)/
+        # xpath for image
         PAGE_IMAGE_XPATH = '//*[@id="image"]'
+        # xpath for the select tag with links to each page in the chapter
         PAGE_SELECT_XPATH = '/html/body/section[1]/div[3]/span/select/option'
+        # xpath for the list of all chapters on the series home
         CHAPTER_SELECT_XPATH = '//*[@id="main"]/article/div/div[2]/div[2]/ul[1]/li/span[1]/a'
 
         def initialize(manga, pool_size=4)
             super(manga, pool_size)
         end
 
+        #
+        # Returns true if the manga is available from mangahere and false
+        # otherwise.
+        #
         def manga_available?
             url = "#{BASE_URL}/manga/#{@manga}"
             page = Nokogiri::HTML(open(url))
@@ -23,6 +29,10 @@ module MangaGet
             page.xpath(CHAPTER_SELECT_XPATH).nil?
         end
 
+        #
+        # Scrapes mangahere for an array of links to each chapter in the
+        # specified manga
+        #
         def get_chapter_links
             url = "#{BASE_URL}/manga/#{@manga}"
             p url
@@ -38,6 +48,10 @@ module MangaGet
             chapters
         end
 
+        #
+        # Scrapes mangahere and returns an array of links to each page in the
+        # chapter.
+        #
         def get_page_links(chapter)
             chapter = _pad_chapter(chapter)
             url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
@@ -52,12 +66,13 @@ module MangaGet
             pages
         end
 
+        #
+        # Scrapes mangahere and downloads all images in a chapter then zips all
+        # the images into a cbz archive.
+        #
         def get_chapter(chapter)
             # check if manga is available
-            if not manga_available?
-                puts "#{@manga.gsub('_', ' ').capitalize} is not available from #{BASE_URL}" 
-                return nil
-            end
+            raise MangaNotAvailableError.new(@manga, BASE_URL) unless manga_available?
 
             chapter = _pad_chapter(chapter)
             images = Array.new()
