@@ -1,8 +1,8 @@
 require_relative 'manga_here'
 
-MANGA = "One Piece"
-PATH = "#{Dir.getwd}/#{MANGA}"
+MANGA = "Feng Shen Ji"
+CHAPTER = 1
 
 scraper = MangaGet::MangaHereScraper.new(MANGA, 4)
-scraper.get_chapter(1)
-scraper.zip_chapter("#{PATH}/c001", "#{MANGA}_c001.cbz")
+scraper.get_chapter(CHAPTER)
+scraper.zip_chapter(CHAPTER)

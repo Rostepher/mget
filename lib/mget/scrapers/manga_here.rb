@@ -26,7 +26,7 @@ module MangaGet
             url = "#{BASE_URL}/manga/#{@manga}"
             page = Nokogiri::HTML(open(url))
 
-            page.xpath(CHAPTER_SELECT_XPATH).nil?
+            not page.xpath(CHAPTER_SELECT_XPATH).empty?
         end
 
         #
@@ -53,7 +53,7 @@ module MangaGet
         # chapter.
         #
         def get_page_links(chapter)
-            chapter = _pad_chapter(chapter)
+            chapter = _pad_num(chapter)
             url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
             page = Nokogiri::HTML(open(url))
 
@@ -74,7 +74,7 @@ module MangaGet
             # check if manga is available
             raise MangaNotAvailableError.new(@manga, BASE_URL) unless manga_available?
 
-            chapter = _pad_chapter(chapter)
+            chapter = _pad_num(chapter)
             images = Array.new()
             
             pages = get_page_links(chapter)
@@ -84,7 +84,7 @@ module MangaGet
             end
 
             # make directory to hold chapter
-            path = "#{Dir.getwd}/#{@manga}/c#{chapter}"
+            path = File.join(Dir.getwd, "#{@manga}/c#{chapter}")
             FileUtils.mkdir_p(path)
 
             # traverse each image and download

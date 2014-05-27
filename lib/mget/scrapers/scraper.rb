@@ -67,20 +67,28 @@ module MangaGet
         end
 
         #
-        # Zips a directory of images into a cbz archive with the the name
-        # zip_file_name.
+        # Zips a directory of images into a cbz archive with the the name.
+        # This method assumes the existence of the chapter and directory
+        # structure @manga/c### in the current working directory.
         #
-        def zip_chapter(dir, zip_file_name)
+        def zip_chapter(chapter)
+            chapter = _pad_num(chapter)
+            path = File.join(Dir.getwd, "#{@manga}/c#{chapter}")
+            zip_name = "#{@manga}.c#{chapter}.cbz"
+
             # change directory
             cur_dir = Dir.getwd
-            Dir.chdir(dir)
+            Dir.chdir(path)
             
-            files = Dir.glob("*.(jpg|jpeg|png)")
-            archive = File.join(dir, zip_file_name)
+            # glob all image files
+            files = Dir['*'].select { |f| f =~ /\d{3}\.(jpg|jpeg|png)/ }.sort!
             p files
-            Zip::File.open(archive, Zip::File::CREATE) do |zip_file|
+
+            # zip files
+            Zip::File.open(zip_name, Zip::File::CREATE) do |zip_file|
                 files.each do |file|
-                    zip_file.add(file, dir + '/' + file)
+                    file_path = File.join(path, file)
+                    zip_file.add(file, file_path)
                 end
 
             end
@@ -95,8 +103,8 @@ module MangaGet
         # Helper to sanitize the given chapter number so it is always 3 chars
         # long, with preceding zeros if the number is too short.
         #
-        def _pad_chapter(chapter)
-            chapter.to_s.rjust(3, '0')
+        def _pad_num(num)
+            num.to_s.rjust(3, '0')
         end
        
         #
