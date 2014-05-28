@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'open-uri'
 require 'fileutils'
+
 require_relative 'scraper'
 
 module MangaGet
@@ -26,7 +27,7 @@ module MangaGet
             url = "#{BASE_URL}/manga/#{@manga}"
             page = Nokogiri::HTML(open(url))
 
-            not page.xpath(CHAPTER_SELECT_XPATH).empty?
+            !page.xpath(CHAPTER_SELECT_XPATH).empty?
         end
 
         #
@@ -38,7 +39,7 @@ module MangaGet
             url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
             page = Nokogiri::HTML(open(url))
 
-            not page.xpath(PAGE_SELECT_XPATH).empty?
+            !page.xpath(PAGE_SELECT_XPATH).empty?
         end
 
         #

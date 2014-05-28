@@ -1,4 +1,5 @@
 require 'zip'
+
 require_relative '../errors'
 require_relative '../thread_pool'
 
@@ -125,8 +126,8 @@ module MangaGet
             Dir.chdir(cur_dir)
         end
 
-        # helpers
         private
+        
         #
         # Helper to sanitize the given chapter number so it is always 3 chars
         # long, with preceding zeros if the number is too short.
