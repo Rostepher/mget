@@ -4,20 +4,32 @@ require_relative '../thread_pool'
 
 module MangaGet
     class Scraper
+        include MangaGet
         include MangaGet::Errors
 
         # regex defining what image types are used
-        IMAGE_NAME_REGEX = /(jpg|jpeg|png)/
+        IMAGE_TYPE_REGEX = /(jpg|jpeg|png)/
         
+        # constants to define in subclasses
+        BASE_URL = ''
+        PAGE_IMAGE_XPATH = ''
+        PAGE_SELECT_XPATH = ''
+        CHAPTER_SELECT_XPATH = ''
+
         # getters
         attr_reader :manga
 
         def initialize(manga, pool_size=4)
             @manga = _sanitize_name(manga)
-            @thread_pool = Thread::Pool.new(pool_size)
+            @thread_pool = ThreadPool.new(pool_size)
         end
 
         def manga_available?
+            # reimplement in child classes
+            raise NotImplementedError
+        end
+
+        def chapter_available?
             # reimplement in child classes
             raise NotImplementedError
         end
@@ -43,22 +55,29 @@ module MangaGet
         # allowing multiple chapters to be downloaded at once.
         #
         def get_chapters(list)
-            begin
-                list.each do |chapter| 
-                    @thread_pool.schedule do
+            unless manga_available?
+                raise MangaNotAvailableError.new(@manga, BASE_URL)
+            end
+
+            list.each do |chapter| 
+                @thread_pool.schedule do
+                    begin
                         get_chapter(chapter)
+                    rescue ChapterNotAvailableError => e
+                        puts e.to_s
                     end
                 end
-            rescue MangaNotAvailableError => e
-                exit
             end
+
+            # wait for threads to finish
+            @thread_pool.join
         end
 
         #
         # Helper method to download images from urls to the given path.
         #
         def download_image(url, path, name)
-            match = IMAGE_NAME_REGEX.match(url)
+            match = IMAGE_TYPE_REGEX.match(url)
 
             image = "#{File.join(path, name)}.#{match[0]}"
             open(image, 'wb') do |file|
@@ -73,16 +92,25 @@ module MangaGet
         #
         def zip_chapter(chapter)
             chapter = _pad_num(chapter)
+
             path = File.join(Dir.getwd, "#{@manga}/c#{chapter}")
             zip_name = "#{@manga}.c#{chapter}.cbz"
-
-            # change directory
+            file_regex = /\d{3}\.(jpg|jpeg|png)/i
+        
+            zip_dir(path, zip_name, file_regex)
+        end
+       
+        #
+        # Helper method to zip all files in a directory that match the given
+        # file_regex.
+        #
+        def zip_dir(path, zip_name, file_regex)
+            # change directory to target
             cur_dir = Dir.getwd
             Dir.chdir(path)
-            
-            # glob all image files
-            files = Dir['*'].select { |f| f =~ /\d{3}\.(jpg|jpeg|png)/ }.sort!
-            p files
+
+            # glob files to zip
+            files = Dir['*'].select { |f| f =~ file_regex }.sort!
 
             # zip files
             Zip::File.open(zip_name, Zip::File::CREATE) do |zip_file|
@@ -96,7 +124,7 @@ module MangaGet
             # change back to previous directory
             Dir.chdir(cur_dir)
         end
-        
+
         # helpers
         private
         #

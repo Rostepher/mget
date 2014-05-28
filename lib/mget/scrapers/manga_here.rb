@@ -30,6 +30,18 @@ module MangaGet
         end
 
         #
+        # Returns true if the chapter given is available from mangahere and
+        # false otherwise.
+        #
+        def chapter_available?(chapter)
+            chapter = _pad_num(chapter)
+            url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
+            page = Nokogiri::HTML(open(url))
+
+            not page.xpath(PAGE_SELECT_XPATH).empty?
+        end
+
+        #
         # Scrapes mangahere for an array of links to each chapter in the
         # specified manga
         #
@@ -71,12 +83,16 @@ module MangaGet
         # the images into a cbz archive.
         #
         def get_chapter(chapter)
-            # check if manga is available
-            raise MangaNotAvailableError.new(@manga, BASE_URL) unless manga_available?
+            # check if the chapter is available
+            unless chapter_available?(chapter)
+                raise ChapterNotAvailableError.new(@manga, chapter, BASE_URL)
+            end
 
             chapter = _pad_num(chapter)
             images = Array.new()
-            
+
+            puts "Getting #{@manga}/c#{chapter}"
+
             pages = get_page_links(chapter)
             pages.each do |url|
                 page = Nokogiri::HTML(open(url))
