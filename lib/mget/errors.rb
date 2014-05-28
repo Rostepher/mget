@@ -1,29 +1,36 @@
 module MangaGet
     module Errors
-        class MangaNotAvailableError < StandardError
-            attr_reader :manga
-            
+        class MangaGetBaseError < StandardError
             def initialize(manga, source)
-                @manga = manga.capitalize.gsub('_', ' ')
+                @manga = capitalize_name(manga)
                 @source = source
             end
+            
+            private
 
+            def pad_num(num)
+                num.to_s.rjust(3, '0')
+            end
+
+            def capitalize_name(name)
+                name.split(/\s|\_|\.|\-/).map(&:capitalize).join(' ')
+            end
+        end
+        
+        class MangaNotAvailableError < MangaGetBaseError
             def to_s
-                "#{@manga} is not available from #{@source}"
+                "\"#{@manga}\" is not available from #{@source}"
             end
         end
 
-        class ChapterNotAvailableError < StandardError
-            attr_reader :manga, :chapter
-
+        class ChapterNotAvailableError < MangaGetBaseError
             def initialize(manga, chapter, source)
-                @manga = manga.capitalize.gsub('_', ' ')
-                @chapter = chapter.to_s.rjust(3, '0')
-                @source = source
+                super(manga, source)
+                @chapter = pad_num(chapter)
             end
 
             def to_s
-                "#{@manga}: chapter #{@chapter} is not available from #{@source}"
+                "\"#{@manga}\":#{@chapter} is not available from #{@source}"
             end
         end
     end

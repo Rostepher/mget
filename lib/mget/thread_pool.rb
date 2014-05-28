@@ -56,7 +56,7 @@ module MangaGet
                 
                 begin
                     @result = @block.call(*@args)
-                rescue StandardError => e
+                rescue Exception => e
                     @error = e
                 end
                 discard
@@ -118,7 +118,7 @@ module MangaGet
                 begin
                     # tell join condition to wait until pool is empty
                     @join_cond.wait(@mutex) unless @threads.empty?
-                rescue StandardError => e
+                rescue Exception => e
                     # report error
                     $stderr.puts e
                     $stderr.puts "Queue contains #{@queue.size} items"

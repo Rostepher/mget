@@ -35,7 +35,7 @@ module MangaGet
         # false otherwise.
         #
         def chapter_available?(chapter)
-            chapter = _pad_num(chapter)
+            chapter = pad_num(chapter)
             url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
             page = Nokogiri::HTML(open(url))
 
@@ -46,9 +46,8 @@ module MangaGet
         # Scrapes mangahere for an array of links to each chapter in the
         # specified manga
         #
-        def get_chapter_links
+        def get_chapter_urls
             url = "#{BASE_URL}/manga/#{@manga}"
-            p url
             page = Nokogiri::HTML(open(url))
 
             # get the list of chapter links
@@ -65,8 +64,8 @@ module MangaGet
         # Scrapes mangahere and returns an array of links to each page in the
         # chapter.
         #
-        def get_page_links(chapter)
-            chapter = _pad_num(chapter)
+        def get_page_urls(chapter)
+            chapter = pad_num(chapter)
             url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
             page = Nokogiri::HTML(open(url))
 
@@ -80,6 +79,23 @@ module MangaGet
         end
 
         #
+        # Scrapes each page of a chapter for an image url and returns an array
+        # of all the urls.
+        #
+        def get_image_urls(chapter)
+            images = Array.new()
+
+            pages = get_page_urls(chapter)
+            pages.each do |url|
+                page = Nokogiri::HTML(open(url))
+                images << page.xpath(PAGE_IMAGE_XPATH)[0][:src]
+            end
+        
+            # return array of image links
+            images
+        end
+
+        #
         # Scrapes mangahere and downloads all images in a chapter then zips all
         # the images into a cbz archive.
         #
@@ -89,19 +105,10 @@ module MangaGet
                 raise ChapterNotAvailableError.new(@manga, chapter, BASE_URL)
             end
 
-            chapter = _pad_num(chapter)
-            images = Array.new()
-
-            puts "Getting #{@manga}/c#{chapter}"
-
-            pages = get_page_links(chapter)
-            pages.each do |url|
-                page = Nokogiri::HTML(open(url))
-                images << page.xpath(PAGE_IMAGE_XPATH)[0][:src]   
-            end
+            images = get_image_urls(chapter)
 
             # make directory to hold chapter
-            path = File.join(Dir.getwd, "#{@manga}/c#{chapter}")
+            path = File.join(Dir.getwd, "#{@manga}/c#{pad_num(chapter)}")
             FileUtils.mkdir_p(path)
 
             # traverse each image and download

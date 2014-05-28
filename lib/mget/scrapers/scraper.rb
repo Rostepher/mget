@@ -11,18 +11,17 @@ module MangaGet
         # regex defining what image types are used
         IMAGE_TYPE_REGEX = /(jpg|jpeg|png)/
         
-        # constants to define in subclasses
-        BASE_URL = ''
-        PAGE_IMAGE_XPATH = ''
-        PAGE_SELECT_XPATH = ''
-        CHAPTER_SELECT_XPATH = ''
-
         # getters
         attr_reader :manga
 
-        def initialize(manga, pool_size=4)
-            @manga = _sanitize_name(manga)
+        def initialize(manga, pool_size=4, **opts)
+            @manga = sanitize_name(manga)
             @thread_pool = ThreadPool.new(pool_size)
+
+            # parse options
+            @zip = opts[:zip] || false
+            @verbose = opts[:verbose] || false
+            @directory = opts[:directory] || Dir.getwd
         end
 
         def manga_available?
@@ -35,12 +34,17 @@ module MangaGet
             raise NotImplementedError
         end
 
-        def get_chapter_links
+        def get_chapter_urls
             # reimplement in child classes
             raise NotImplementedError
         end
 
-        def get_page_links(chapter)
+        def get_page_urls(chapter)
+            # reimplement in child classes
+            raise NotImplementedError
+        end
+
+        def get_image_urls(chapter)
             # reimplement in child classes
             raise NotImplementedError
         end
@@ -92,31 +96,31 @@ module MangaGet
         # structure @manga/c### in the current working directory.
         #
         def zip_chapter(chapter)
-            chapter = _pad_num(chapter)
+            chapter = pad_num(chapter)
 
             path = File.join(Dir.getwd, "#{@manga}/c#{chapter}")
             zip_name = "#{@manga}.c#{chapter}.cbz"
             file_regex = /\d{3}\.(jpg|jpeg|png)/i
         
-            zip_dir(path, zip_name, file_regex)
+            zip_dir(path, zip_name, file_regex) if Dir.exists?(path)
         end
        
         #
         # Helper method to zip all files in a directory that match the given
         # file_regex.
         #
-        def zip_dir(path, zip_name, file_regex)
+        def zip_dir(dir, zip_name, file_regex)
             # change directory to target
             cur_dir = Dir.getwd
-            Dir.chdir(path)
+            Dir.chdir(dir)
 
-            # glob files to zip
-            files = Dir['*'].select { |f| f =~ file_regex }.sort!
+            # glob and sort files to zip
+            files = Dir.glob('*').select { |f| f =~ file_regex }.sort!
 
             # zip files
             Zip::File.open(zip_name, Zip::File::CREATE) do |zip_file|
                 files.each do |file|
-                    file_path = File.join(path, file)
+                    file_path = File.join(dir, file)
                     zip_file.add(file, file_path)
                 end
 
@@ -132,7 +136,7 @@ module MangaGet
         # Helper to sanitize the given chapter number so it is always 3 chars
         # long, with preceding zeros if the number is too short.
         #
-        def _pad_num(num)
+        def pad_num(num)
             num.to_s.rjust(3, '0')
         end
        
@@ -140,8 +144,22 @@ module MangaGet
         # Sanitizes name so that all space characters are _ and downcases the
         # entire string. Makes a string URL ready.
         #
-        def _sanitize_name(name)
+        def sanitize_name(name)
             name.to_s.downcase.gsub(/\s/, '_')
+        end
+
+        #
+        # Capitalizes each word in name
+        #
+        def capitalize_name(name)
+            name.split(/\s|\_|\.|\-/).map(&:capitalize).join(' ')
+        end
+
+        #
+        # Prints given message if in verbose mode.
+        #
+        def verbose(msg)
+            puts msg if @verbose
         end
     end
 end
