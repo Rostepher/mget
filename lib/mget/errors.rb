@@ -1,19 +1,13 @@
+require_relative 'helpers'
+
 module MangaGet
     module Errors
         class MangaGetBaseError < StandardError
+            include MangaGet::Helpers
+
             def initialize(manga, source)
                 @manga = capitalize_name(manga)
                 @source = source
-            end
-            
-            private
-
-            def pad_num(num)
-                num.to_s.rjust(3, '0')
-            end
-
-            def capitalize_name(name)
-                name.split(/\s|\_|\.|\-/).map(&:capitalize).join(' ')
             end
         end
         

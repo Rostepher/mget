@@ -1,7 +1,7 @@
 require_relative 'manga_here'
 
-MANGA = "Feng Shen Ji"
-CHAPTERS = (1..2).to_a << 108
+MANGA = "Hunter X Hunter"
+CHAPTERS = [340.5, 1]
 OPTS_HASH = { verbose: true, zip:true }
 
 scraper = MangaGet::MangaHereScraper.new(MANGA, 4, OPTS_HASH)

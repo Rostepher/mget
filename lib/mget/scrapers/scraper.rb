@@ -1,20 +1,19 @@
 require 'zip'
+require 'fileutils'
 
 require_relative '../errors'
+require_relative '../helpers'
 require_relative '../thread_pool'
 
 module MangaGet
     class Scraper
         include MangaGet
         include MangaGet::Errors
+        include MangaGet::Helpers
 
         # regex defining what image types are used
         IMAGE_TYPE_REGEX = /(jpg|jpeg|png)/
        
-        # regex to sanitize manga name
-        SANITIZE_CHARS = /[\ |\.|\_|\-]/
-
-        # getters
         attr_reader :manga
 
         def initialize(manga, pool_size=4, options={})
@@ -22,9 +21,13 @@ module MangaGet
             @thread_pool = ThreadPool.new(pool_size)
 
             # parse options
-            @zip = options[:zip] || false
-            @verbose = options[:verbose] || false
-            @directory = options[:directory] || Dir.getwd
+            @options = {
+                :verbose        => options[:verbose] || false,
+                :get_all        => options[:get_all] || false,
+                :zip            => options[:zip] || false,
+                :source         => options[:source] || :manga_here,
+                :keep_temp_dirs => options[:keep_temp_dirs] || false
+            }
         end
 
         def manga_available?
@@ -33,6 +36,11 @@ module MangaGet
         end
 
         def chapter_available?
+            # reimplement in child classes
+            raise NotImplementedError
+        end
+
+        def get_chapter_list
             # reimplement in child classes
             raise NotImplementedError
         end
@@ -64,8 +72,11 @@ module MangaGet
         #
         def get_chapters(list)
             unless manga_available?
-                raise MangaNotAvailableError.new(@manga, BASE_URL)
+                raise MangaNotAvailableError.new(@manga, @options[:source])
             end
+
+            # option to get all is set
+            list = get_chapter_list if @options[:get_all]
 
             list.each do |chapter| 
                 @thread_pool.schedule do
@@ -79,6 +90,13 @@ module MangaGet
 
             # wait for threads to finish
             @thread_pool.join
+
+            # remove temp dir if keep temp dir option is false
+            unless @options[:keep_temp_dir]
+                path = File.join(Dir.getwd, @manga)
+                verbose "Removing temp directory #{path}"
+                FileUtils.rm_r(path)
+            end            
         end
 
         #
@@ -136,36 +154,12 @@ module MangaGet
         end
 
         private
-        
-        #
-        # Helper to sanitize the given chapter number so it is always 3 chars
-        # long, with preceding zeros if the number is too short.
-        #
-        def pad_num(num)
-            num.to_s.rjust(3, '0')
-        end
-       
-        #
-        # Sanitizes name so that all space characters are _ and downcases the
-        # entire string. Makes a string URL ready.
-        #
-        def sanitize_name(name)
-            name.to_s.downcase.gsub(SANITIZE_CHARS, '_')
-        end
-
-        #
-        # Capitalizes each word in name
-        #
-        def capitalize_name(name)
-            name.split(SANITIZE_CHARS).map(&:capitalize).join(' ')
-        end
-
         #
         # Prints given message if in verbose mode.
         #
         def verbose(msg, tabs=0)
             _tab = "    " # four spaces
-            puts (_tab * tabs) + msg if @verbose
+            puts (_tab * tabs) + msg if @options[:verbose]
         end
 
         #

@@ -1,6 +1,5 @@
 require 'nokogiri'
 require 'open-uri'
-require 'fileutils'
 
 require_relative 'scraper'
 
@@ -39,15 +38,36 @@ module MangaGet
         end
 
         #
-        # Scrapes mangahere for an array of links to each chapter in the
-        # specified manga
+        # Scrapes mangahere for an array of chapter numbers. This is used
+        # primarily to handle the awkward mini-chapters like 340.5.
+        #
+        def get_chapter_list
+            urls = get_chapter_urls
+            chapters = Array.new
+
+            urls.each do |url|
+                match = /\/c(\d{3}\.\d+|\d{3})/.match(url)[1]
+                chapters << if float?(match)
+                    match.to_f
+                else
+                    match.to_i
+                end
+            end
+
+            # return array of chapter numbers
+            chapters
+        end
+
+        #
+        # Scrapes mangahere for an array of links to each chapter in @manga.
+        # Currently unused, but leaving it for now.
         #
         def get_chapter_urls
             url = "#{BASE_URL}/manga/#{@manga}"
             page = Nokogiri::HTML(open(url))
 
             # get the list of chapter links
-            chapters = Array.new()
+            chapters = Array.new
             page.xpath(CHAPTER_SELECT_XPATH).each do |match|
                 chapters << match[:href]
             end
@@ -65,7 +85,7 @@ module MangaGet
             url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
             page = Nokogiri::HTML(open(url))
 
-            pages = Array.new()
+            pages = Array.new
             page.xpath(PAGE_SELECT_XPATH).each do |match|
                 pages << match[:value]
             end
@@ -79,7 +99,7 @@ module MangaGet
         # of all the urls.
         #
         def get_image_urls(chapter)
-            images = Array.new()
+            images = Array.new
 
             pages = get_page_urls(chapter)
             pages.each do |url|
@@ -98,7 +118,7 @@ module MangaGet
         def get_chapter(chapter)
             # check if the chapter is available
             unless chapter_available?(chapter)
-                raise ChapterNotAvailableError.new(@manga, chapter, BASE_URL)
+                raise ChapterNotAvailableError.new(@manga, chapter, @options[:source])
             end
 
             # verbose message
@@ -118,7 +138,7 @@ module MangaGet
             end
 
             # zip if the zip option is set
-            zip_chapter(chapter) if @zip
+            zip_chapter(chapter) if @options[:zip]
         end
     end
 end
