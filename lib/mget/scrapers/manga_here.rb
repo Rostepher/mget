@@ -55,7 +55,7 @@ module MangaGet
             end
 
             # return array of chapter numbers
-            chapters
+            chapters.sort!
         end
 
         #
