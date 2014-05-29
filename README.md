@@ -8,4 +8,3 @@ Sources include
 * mangahere
 * mangapanda
 * mangafox
-* mangastream

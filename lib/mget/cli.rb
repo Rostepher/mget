@@ -3,8 +3,7 @@ require_relative 'version'
 
 module MangaGet
     module CLI
-        SOURCES = [:manga_fox, :manga_here, :manga_panda, :manga_stream]
-        SOURCE_PATTERN = /^[manga][-|_](fox|here|panda|stream)$/i
+        SOURCES = [:manga_fox, :manga_here, :manga_panda]
 
         # parse command line args and return a hash
         module_function
@@ -24,16 +23,16 @@ module MangaGet
             OptionParser.new do |opts|
                 opts.banner = "Usage: mget [options] <manga name>"
 
-                opts.on("-v", "--verbose", "Run this script verbosely") do |is_verbose|
-                    options[:verbose] = is_verbose
+                opts.on("-v", "--verbose", "Run this script verbosely") do |bool|
+                    options[:verbose] = bool
                 end
 
-                opts.on("--all", "Gets all of the given manga") do |get_all|
-                    options[:get_all] = get_all
+                opts.on("--all", "Gets all of the given manga") do |bool|
+                    options[:get_all] = bool
                 end
 
-                opts.on("-z", "--zip", "Packages each chapter in a .cbz archive") do |zip|
-                    options[:zip] = zip
+                opts.on("-z", "--zip", "Packages each chapter in a .cbz archive") do |bool|
+                    options[:zip] = bool
                 end
 
                 opts.on("-s", "--source SOURCE", SOURCES,
@@ -44,10 +43,10 @@ module MangaGet
 
                 opts.on("-c", "--chapters CHAPTERS", Array,
                         "Chapters to get separated by commas",
-                        "   1,2-6,7..9,10...20 donwload chapters 1-20") do |array|
+                        "   1,2-6,7..9,10...20 donwload chapters 1-20") do |list|
                     
                     chapters = Array.new
-                    array.each do |elem|
+                    list.each do |elem|
                         match = /(\d+)(-|\.{2,3})(\d+)/.match(elem)
 
                         if match.nil?
@@ -78,6 +77,10 @@ module MangaGet
                     options[:directory] = dir unless dir.nil?
                 end
 
+                opts.on("-k", "--keep-temp", "Keep temp directories") do |bool|
+                    options[:keep_temp_dirs] = bool
+                end
+
                 opts.on_tail("--version", "Show version") do
                     puts MangaGet::VERSION
                     exit
@@ -89,7 +92,7 @@ module MangaGet
                 end
             end.parse!
 
-            return options
+            options
         end
     end
 end

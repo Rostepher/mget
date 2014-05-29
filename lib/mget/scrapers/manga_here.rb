@@ -15,10 +15,6 @@ module MangaGet
         # xpath for the list of all chapters on the series home
         CHAPTER_SELECT_XPATH = '//*[@id="main"]/article/div/div[2]/div[2]/ul[1]/li/span[1]/a'
 
-        def initialize(manga, pool_size=4)
-            super(manga, pool_size)
-        end
-
         #
         # Returns true if the manga is available from mangahere and false
         # otherwise.
@@ -105,10 +101,14 @@ module MangaGet
                 raise ChapterNotAvailableError.new(@manga, chapter, BASE_URL)
             end
 
+            # verbose message
+            verbose "Getting \"#{capitalize_name(@manga)}\":#{pad_num(chapter)}"
+            
             images = get_image_urls(chapter)
 
             # make directory to hold chapter
             path = File.join(Dir.getwd, "#{@manga}/c#{pad_num(chapter)}")
+            verbose "Making directory #{path}"
             FileUtils.mkdir_p(path)
 
             # traverse each image and download
@@ -116,6 +116,9 @@ module MangaGet
                 name = (i + 1).to_s.rjust(3, '0')
                 download_image(images[i], path, name)
             end
+
+            # zip if the zip option is set
+            zip_chapter(chapter) if @zip
         end
     end
 end

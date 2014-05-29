@@ -10,18 +10,21 @@ module MangaGet
 
         # regex defining what image types are used
         IMAGE_TYPE_REGEX = /(jpg|jpeg|png)/
-        
+       
+        # regex to sanitize manga name
+        SANITIZE_CHARS = /[\ |\.|\_|\-]/
+
         # getters
         attr_reader :manga
 
-        def initialize(manga, pool_size=4, **opts)
+        def initialize(manga, pool_size=4, options={})
             @manga = sanitize_name(manga)
             @thread_pool = ThreadPool.new(pool_size)
 
             # parse options
-            @zip = opts[:zip] || false
-            @verbose = opts[:verbose] || false
-            @directory = opts[:directory] || Dir.getwd
+            @zip = options[:zip] || false
+            @verbose = options[:verbose] || false
+            @directory = options[:directory] || Dir.getwd
         end
 
         def manga_available?
@@ -69,7 +72,7 @@ module MangaGet
                     begin
                         get_chapter(chapter)
                     rescue ChapterNotAvailableError => e
-                        puts e.to_s
+                        error e.to_s
                     end
                 end
             end
@@ -101,7 +104,9 @@ module MangaGet
             path = File.join(Dir.getwd, "#{@manga}/c#{chapter}")
             zip_name = "#{@manga}.c#{chapter}.cbz"
             file_regex = /\d{3}\.(jpg|jpeg|png)/i
-        
+
+            verbose "Creating #{zip_name}"
+
             zip_dir(path, zip_name, file_regex) if Dir.exists?(path)
         end
        
@@ -117,6 +122,9 @@ module MangaGet
             # glob and sort files to zip
             files = Dir.glob('*').select { |f| f =~ file_regex }.sort!
 
+            # change back to previous directory
+            Dir.chdir(cur_dir)
+
             # zip files
             Zip::File.open(zip_name, Zip::File::CREATE) do |zip_file|
                 files.each do |file|
@@ -125,9 +133,6 @@ module MangaGet
                 end
 
             end
-
-            # change back to previous directory
-            Dir.chdir(cur_dir)
         end
 
         private
@@ -145,21 +150,29 @@ module MangaGet
         # entire string. Makes a string URL ready.
         #
         def sanitize_name(name)
-            name.to_s.downcase.gsub(/\s/, '_')
+            name.to_s.downcase.gsub(SANITIZE_CHARS, '_')
         end
 
         #
         # Capitalizes each word in name
         #
         def capitalize_name(name)
-            name.split(/\s|\_|\.|\-/).map(&:capitalize).join(' ')
+            name.split(SANITIZE_CHARS).map(&:capitalize).join(' ')
         end
 
         #
         # Prints given message if in verbose mode.
         #
-        def verbose(msg)
-            puts msg if @verbose
+        def verbose(msg, tabs=0)
+            _tab = "    " # four spaces
+            puts (_tab * tabs) + msg if @verbose
+        end
+
+        #
+        # Prints message in verbose mode with prefix of "ERROR: "
+        #
+        def error(msg)
+            verbose "ERROR: " + msg
         end
     end
 end
