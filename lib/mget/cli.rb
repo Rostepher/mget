@@ -76,7 +76,7 @@ module MangaGet
             end
 
             parser.on("-k", "--keep-temp", "Keep temp directories") do |bool|
-                options[:keep_temp_dirs] = bool
+                options[:keep_temp] = bool
             end
 
             parser.on_tail("--version", "Show version") do

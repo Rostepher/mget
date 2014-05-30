@@ -1,14 +1,33 @@
 module MangaGet
     module Helpers
         SANITIZE_CHARS = /[\ |\.|\_|\-]/
+        NUMBER_REGEX = /^\d+\.{0,1}\d*$/
+        
         #
         # Returns if num is a float.
         #
         module_function
         def float?(num)
-            num.to_s.split('.').length > 1
+            # ensure input is a string
+            num = num.to_s
+
+            return false if NUMBER_REGEX.match(num).nil?
+            num.split('.').length > 1
         end
-        
+
+        #
+        # Converts a given string to float or int if the string is a number. If
+        # the given string is not a number the string is returned.
+        #
+        def to_num(s)
+            # ensure argument is string
+            s = s.to_s
+
+            return s if NUMBER_REGEX.match(s).nil?
+            return s.to_f if float?(s)
+            s.to_i
+        end
+
         #
         # Sanitizes num so that the integral part (part in front of decimal) is
         # always at least three chars long, with preceding 0's if needed. This

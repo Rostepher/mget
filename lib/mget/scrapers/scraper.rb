@@ -16,17 +16,20 @@ module MangaGet
        
         attr_reader :manga
 
-        def initialize(manga, pool_size=4, options={})
+        def initialize(manga, pool_size=4, options=Hash.new)
             @manga = sanitize_name(manga)
             @thread_pool = ThreadPool.new(pool_size)
 
+            # scrape and save list of all chapter urls
+            @chapters = get_chapters_hash
+
             # parse options
             @options = {
-                :verbose        => options[:verbose] || false,
-                :get_all        => options[:get_all] || false,
-                :zip            => options[:zip] || false,
-                :source         => options[:source] || :manga_here,
-                :keep_temp_dirs => options[:keep_temp_dirs] || false
+                :verbose   => options[:verbose]   || false,
+                :get_all   => options[:get_all]   || false,
+                :zip       => options[:zip]       || false,
+                :source    => options[:source]    || :manga_here,
+                :keep_temp => options[:keep_temp] || false
             }
         end
 
@@ -40,7 +43,7 @@ module MangaGet
             raise NotImplementedError
         end
 
-        def get_chapter_list
+        def get_chapters_hash
             # reimplement in child classes
             raise NotImplementedError
         end
@@ -76,7 +79,7 @@ module MangaGet
             end
 
             # option to get all is set
-            list = get_chapter_list if @options[:get_all]
+            list = @chapters.keys if @options[:get_all]
 
             list.each do |chapter| 
                 @thread_pool.schedule do
@@ -91,16 +94,19 @@ module MangaGet
             # wait for threads to finish
             @thread_pool.join
 
-            # remove temp dir if keep temp dir option is false
-            unless @options[:keep_temp_dir]
+            # remove temp dir if keep_temp option is false
+            unless @options[:keep_temp]
                 path = File.join(Dir.getwd, @manga)
                 verbose "Removing temp directory #{path}"
                 FileUtils.rm_r(path)
             end            
         end
 
+        private
+
         #
-        # Helper method to download images from urls to the given path.
+        # Downloads an image from the given url to the given path with the
+        # given name.
         #
         def download_image(url, path, name)
             match = IMAGE_TYPE_REGEX.match(url)
@@ -153,7 +159,6 @@ module MangaGet
             end
         end
 
-        private
         #
         # Prints given message if in verbose mode.
         #

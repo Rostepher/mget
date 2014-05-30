@@ -7,22 +7,23 @@ module MangaGet
     class MangaHereScraper < Scraper
         # base url for mangahere
         BASE_URL = 'http://mangahere.co'
+
         # xpath for image
         PAGE_IMAGE_XPATH = '//*[@id="image"]'
         # xpath for the select tag with links to each page in the chapter
         PAGE_SELECT_XPATH = '/html/body/section[1]/div[3]/span/select/option'
         # xpath for the list of all chapters on the series home
         CHAPTER_SELECT_XPATH = '//*[@id="main"]/article/div/div[2]/div[2]/ul[1]/li/span[1]/a'
+        
+        # regex to match chapter number in url
+        CHAPTER_NUMBER_REGEX = /\/c(\d{3}\.{0,1}\d*)/
 
         #
         # Returns true if the manga is available from mangahere and false
         # otherwise.
         #
         def manga_available?
-            url = "#{BASE_URL}/manga/#{@manga}"
-            page = Nokogiri::HTML(open(url))
-
-            !page.xpath(CHAPTER_SELECT_XPATH).empty?
+            !@chapters.empty?
         end
 
         #
@@ -30,32 +31,25 @@ module MangaGet
         # false otherwise.
         #
         def chapter_available?(chapter)
-            chapter = pad_num(chapter)
-            url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
-            page = Nokogiri::HTML(open(url))
-
-            !page.xpath(PAGE_SELECT_XPATH).empty?
+            @chapters.key?(to_num(chapter))
         end
 
         #
-        # Scrapes mangahere for an array of chapter numbers. This is used
-        # primarily to handle the awkward mini-chapters like 340.5.
+        # Scrapes mangahere for a hash, with each key being the chapter number
+        # and the value is the url for that chapter. This is used primarily to
+        # handle the awkward mini-chapters like 340.5.
         #
-        def get_chapter_list
+        def get_chapters_hash
             urls = get_chapter_urls
-            chapters = Array.new
+            chapters = Hash.new
 
             urls.each do |url|
-                match = /\/c(\d{3}\.\d+|\d{3})/.match(url)[1]
-                chapters << if float?(match)
-                    match.to_f
-                else
-                    match.to_i
-                end
+                match = to_num(CHAPTER_NUMBER_REGEX.match(url)[1])
+                chapters[match] = url if !match.nil?
             end
 
-            # return array of chapter numbers
-            chapters.sort!
+            # return hash of chapter numbers
+            chapters
         end
 
         #
@@ -73,7 +67,7 @@ module MangaGet
             end
 
             # return array of chapter links
-            chapters
+            chapters.sort!
         end
 
         #
@@ -81,8 +75,7 @@ module MangaGet
         # chapter.
         #
         def get_page_urls(chapter)
-            chapter = pad_num(chapter)
-            url = "#{BASE_URL}/manga/#{@manga}/c#{chapter}"
+            url = @chapters[to_num(chapter)]
             page = Nokogiri::HTML(open(url))
 
             pages = Array.new
