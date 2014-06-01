@@ -4,13 +4,17 @@ class String
 
     # Returns true for a str that contains only a representation of a floating
     # point number.
+    #
+    # @returns [true, false] if self is a float type in string format
     def float?
-        return false if self.numeric?
+        return false if !self.numeric?
         self.split('.').length > 1
     end
 
     # Returns true for a str that contains only a representation of a floating
     # point number or an integer.
+    #
+    # @returns [true, false] if self is a numeric type in string format
     def numeric?
         !NUMERIC_REGEX.match(self).nil?
     end
@@ -18,6 +22,9 @@ class String
     # Returns the result of interpreting the characters in str as a floating
     # point number or integer. Str can only contain a numeric representation.
     # If there is not a valid numeric type in str, then Float::NAN is returned.
+    #
+    # @returns [Float::NAN, Float, Integer] casted numeric of self or
+    #   Float::NAN
     def to_n
         return Float::NAN if !self.numeric?
         return self.to_f if self.float?
@@ -26,7 +33,9 @@ class String
 
     # Returns a copy of str with the first character of every word converted to
     # uppercase and the remainder to lowercase. Does not capitalize "small
-    # words" as defined by the "New York Time Manual of Style". 
+    # words" as defined by the "New York Time Manual of Style".
+    #
+    # @returns [String] titlecased str
     def titlecase
         # traverse each word and upcase all non-small words
         title = self.split(' ').map! do |word|

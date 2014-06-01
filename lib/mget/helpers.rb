@@ -9,16 +9,23 @@ module MangaGet
         # method returns a string of the padded number.
         #
         # @param n [String, Float, Integer] number to be padded
+        # @param pad_char [String] character or string to pad n with
+        # @param pad_len [Integer] number of places to pad
+        # @returns [String] padded string of n
         module_function
-        def pad(n, pad_len=3)
-            n.to_s unless n.is_a? String
+        def pad(n, pad_char='0', pad_len=3)
+            n = n.to_s unless n.is_a? String
             parts = n.split('.')
-            parts[0] = parts[0].rjust(pad_len, '0')
+            parts[0] = parts[0].rjust(pad_len, pad_char)
             parts.join('.')
         end
        
         # Sanitizes name so that all space characters are _ and downcases the
         # entire string. Makes a string URL ready.
+        #
+        # @params str [String] string to sanitize
+        # @params delim [String] delimeter string, default '_'
+        # @returns [String] sanitized string
         module_function
         def sanitize_str(str, delim='_')
             raise TypeError, "expected String" unless str.is_a? String

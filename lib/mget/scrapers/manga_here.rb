@@ -116,15 +116,12 @@ module MangaGet
         #
         # @param chapter [Integer, Float] the chapter number
         def get_chapter(chapter)
-            # enforce type
-            if !chapter.is_a? Float || !chapter.is_a? Integer
-                raise TypeError, "expected Integer or Float, got #{chapter.class}"
-            end
-
             # check if the chapter is available
             if !chapter_available?(chapter)
                 raise ChapterNotAvailableError.new(@manga, chapter, @options[:source])
             end
+
+            p Helpers::pad(chapter)
 
             # verbose message
             verbose "Getting \"#{@manga.titlecase}\":#{Helpers::pad(chapter)}"
