@@ -1,30 +1,34 @@
 require_relative 'helpers'
+require_relative 'string'
 
 module MangaGet
     module Errors
-        class MangaGetBaseError < StandardError
-            include MangaGet::Helpers
+        include MangaGet::Helpers
 
+        # Error class that means a manga/manhwa was not available.
+        class MangaNotAvailableError < StandardError
             def initialize(manga, source)
-                @manga = capitalize_name(manga)
-                @source = source
+                super()
+                @manga = manga.titlecase
+                @source = source.titlecase
             end
-        end
-        
-        class MangaNotAvailableError < MangaGetBaseError
-            def to_s
-                "\"#{@manga}\" is not available from #{@source}"
+            
+            def message
+                super + "\"#{@manga}\" is not available from #{@source}"
             end
         end
 
-        class ChapterNotAvailableError < MangaGetBaseError
+        # Error class that means a chapter was not available.
+        class ChapterNotAvailableError < StandardError
             def initialize(manga, chapter, source)
-                super(manga, source)
-                @chapter = pad_num(chapter)
+                super()
+                @manga = manga.titlecase
+                @chapter = pad(chapter)
+                @source = source.titlecase
             end
 
-            def to_s
-                "\"#{@manga}\":#{@chapter} is not available from #{@source}"
+            def message
+                super + "\"#{@manga}\":#{@chapter} is not available from #{@source}"
             end
         end
     end

@@ -2,9 +2,13 @@ require 'nokogiri'
 require 'open-uri'
 
 require_relative 'scraper'
+require_relative '../string'
 
 module MangaGet
+    
+    # Subclass of {MangaGet::Scraper Scraper} that targets mangahere.co
     class MangaHereScraper < Scraper
+
         # base url for mangahere
         BASE_URL = 'http://mangahere.co'
 
@@ -18,33 +22,35 @@ module MangaGet
         # regex to match chapter number in url
         CHAPTER_NUMBER_REGEX = /\/c(\d{3}\.{0,1}\d*)/
 
-        #
         # Returns true if the manga is available from mangahere and false
         # otherwise.
         #
+        # @returns [true, flase] if the manga is available from mangahere.co
         def manga_available?
             !@chapters.empty?
         end
 
-        #
         # Returns true if the chapter given is available from mangahere and
         # false otherwise.
         #
+        # @param chapter [Integer, Float] chapter number
+        # @returns [true, false] if chapter is available
         def chapter_available?(chapter)
-            @chapters.key?(to_num(chapter))
+            @chapters.key?(chapter)
         end
 
-        #
         # Scrapes mangahere for a hash, with each key being the chapter number
         # and the value is the url for that chapter. This is used primarily to
         # handle the awkward mini-chapters like 340.5.
         #
+        # @returns [Hash{(Integer, Float) => String}] a hash of each chapter url
+        #   related to a key of the chapter number
         def get_chapters_hash
             urls = get_chapter_urls
             chapters = Hash.new
 
             urls.each do |url|
-                match = to_num(CHAPTER_NUMBER_REGEX.match(url)[1])
+                match = (CHAPTER_NUMBER_REGEX.match(url)[1]).to_n
                 chapters[match] = url if !match.nil?
             end
 
@@ -52,10 +58,9 @@ module MangaGet
             chapters
         end
 
-        #
         # Scrapes mangahere for an array of links to each chapter in @manga.
-        # Currently unused, but leaving it for now.
         #
+        # @returns [Array<String>] an array of urls for each chapter of a manga
         def get_chapter_urls
             url = "#{BASE_URL}/manga/#{@manga}"
             page = Nokogiri::HTML(open(url))
@@ -70,12 +75,13 @@ module MangaGet
             chapters.sort!
         end
 
-        #
         # Scrapes mangahere and returns an array of links to each page in the
         # chapter.
         #
+        # @param chapters [Integer, Float] the chapter number
+        # @returns [Array<String>] an array of urls for each page in a chapter
         def get_page_urls(chapter)
-            url = @chapters[to_num(chapter)]
+            url = @chapters[chapter]
             page = Nokogiri::HTML(open(url))
 
             pages = Array.new
@@ -87,10 +93,11 @@ module MangaGet
             pages
         end
 
-        #
         # Scrapes each page of a chapter for an image url and returns an array
         # of all the urls.
         #
+        # @param chapter [Integer, Float] the chapter number
+        # @returns [Array<String>] an array of urls for each image in a chapter
         def get_image_urls(chapter)
             images = Array.new
 
@@ -104,29 +111,33 @@ module MangaGet
             images
         end
 
-        #
         # Scrapes mangahere and downloads all images in a chapter then zips all
         # the images into a cbz archive.
         #
+        # @param chapter [Integer, Float] the chapter number
         def get_chapter(chapter)
+            # enforce type
+            if !chapter.is_a? Float || !chapter.is_a? Integer
+                raise TypeError, "expected Integer or Float, got #{chapter.class}"
+            end
+
             # check if the chapter is available
-            unless chapter_available?(chapter)
+            if !chapter_available?(chapter)
                 raise ChapterNotAvailableError.new(@manga, chapter, @options[:source])
             end
 
             # verbose message
-            verbose "Getting \"#{capitalize_name(@manga)}\":#{pad_num(chapter)}"
+            verbose "Getting \"#{@manga.titlecase}\":#{Helpers::pad(chapter)}"
             
-            images = get_image_urls(chapter)
-
             # make directory to hold chapter
-            path = File.join(Dir.getwd, "#{@manga}/c#{pad_num(chapter)}")
+            path = File.join(@temp_dir, "c#{Helpers::pad(chapter)}")
             verbose "Making directory #{path}"
             FileUtils.mkdir_p(path)
 
             # traverse each image and download
-            (0...(images.length)).each do |i|
-                name = (i + 1).to_s.rjust(3, '0')
+            images = get_image_urls(chapter)
+            0.upto(images.length) do |i|
+                name = Helpers::pad(i + 1)
                 download_image(images[i], path, name)
             end
 
