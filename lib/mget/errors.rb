@@ -10,7 +10,7 @@ module MangaGet
             def initialize(manga, source)
                 super()
                 @manga = manga.titlecase
-                @source = source.titlecase
+                @source = source.to_s.titlecase
             end
             
             def message
@@ -24,7 +24,7 @@ module MangaGet
                 super()
                 @manga = manga.titlecase
                 @chapter = pad(chapter)
-                @source = source.titlecase
+                @source = source.to_s.titlecase
             end
 
             def message

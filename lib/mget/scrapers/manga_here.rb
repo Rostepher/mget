@@ -18,6 +18,8 @@ module MangaGet
         PAGE_SELECT_XPATH = '/html/body/section[1]/div[3]/span/select/option'
         # xpath for the list of all chapters on the series home
         CHAPTER_SELECT_XPATH = '//*[@id="main"]/article/div/div[2]/div[2]/ul[1]/li/span[1]/a'
+        # xpath to the warning put on mangafox pages for licensed manga
+        MANGA_LICENSED_XPATH = '' 
         
         # regex to match chapter number in url
         CHAPTER_NUMBER_REGEX = /\/c(\d{3}\.{0,1}\d*)/
@@ -27,6 +29,7 @@ module MangaGet
         #
         # @returns [true, flase] if the manga is available from mangahere.co
         def manga_available?
+            return false if licensed?
             !@chapters.empty?
         end
 
@@ -36,8 +39,22 @@ module MangaGet
         # @param chapter [Integer, Float] chapter number
         # @returns [true, false] if chapter is available
         def chapter_available?(chapter)
+            return false if licensed?
             @chapters.key?(chapter)
         end
+
+        # Returns true if the manga is licensed, meaning no chapters are
+        # available from mangahere.co
+        # 
+        # @returns [true, false] if the manga is licensed
+        def licensed?
+            url = "#{BASE_URL}/manga/#{@manga}"
+            page = Nokogiri::HTML(open(url))
+
+            # if empty then unlicensed! yay!
+            !page.xpath(MANGA_LICENSED_XPATH).empty?
+        end
+
 
         # Scrapes mangahere for a hash, with each key being the chapter number
         # and the value is the url for that chapter. This is used primarily to
