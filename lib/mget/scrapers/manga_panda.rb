@@ -19,7 +19,7 @@ module MangaGet
         # xpath for the tag holding the last page number
         PAGE_MAX_XPATH = '//*[@id="selectpage"]/text()'
         # xpath for the list of all chapters on the series home
-        CHAPTER_SELECT_XPATH = '//*[@id="listing"]/tbody/tr/td/a'
+        CHAPTER_SELECT_XPATH = '//*[@id="listing"]//tr/td/a'
         # xpath to the warning put on mangapanda pages for licensed manga
         MANGA_LICENSED_XPATH = '' 
 
@@ -102,7 +102,7 @@ module MangaGet
             # get the list of chapter links
             chapters = Array.new
             page.xpath(CHAPTER_SELECT_XPATH).each do |match|
-                chapters << match[:href]
+                chapters << BASE_URL + match[:href]
             end
 
             # return array of chapter links
