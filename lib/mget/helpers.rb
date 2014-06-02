@@ -28,8 +28,16 @@ module MangaGet
         # @returns [String] sanitized string
         module_function
         def sanitize_str(str, delim='_')
-            raise TypeError, "expected String" unless str.is_a? String
             str.downcase.gsub(SANITIZE_CHARS, delim)
+        end
+
+        # Sanitizes and titlecases a given title.
+        #
+        # @param title [String] title to process
+        # @returns [String] properly formatted title
+        module_function
+        def fmt_title(title)
+            sanitize_str(title, ' ').titlecase
         end
     end
 end

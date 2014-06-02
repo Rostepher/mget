@@ -7,9 +7,7 @@ require 'set'
 
 module MangaGet
     class ThreadPool
-        #
         # Encapsulates a block and arguments to be run by a thread.
-        #
         class Task
             # unique value to express variable is not set
             NOT_SET = Object.new.freeze
@@ -22,10 +20,8 @@ module MangaGet
                 @block = block
             end
 
-            #
             # Will immediately return a value if there is a result, otherwise
             # it will start the task and wait for execution to end.
-            #
             def value
                 unless complete?
                     @mutex.synchronize do
@@ -35,9 +31,7 @@ module MangaGet
                 error? ? raise(@error) : @result
             end
 
-            #
             # If no other thread is working on the task, begin execution.
-            #
             def start
                 if @mutex.try_lock
                     call_block
@@ -47,10 +41,8 @@ module MangaGet
 
             private
             
-            #
             # Calls the block and saves the result or error if an exception was
             # caught.
-            #
             def call_block
                 return if complete?
                 
@@ -62,30 +54,22 @@ module MangaGet
                 discard
             end
 
-            #
             # Is there a result?
-            #
             def result?
                 !@result.equal?(NOT_SET)
             end
 
-            #
             # Did execution throw an error?
-            #
             def error?
                 !@error.equal?(NOT_SET)
             end
 
-            #
             # Is the task complete?
-            #
             def complete?
                 result? || error?
             end
 
-            #
             # Discards the values of args and block
-            #
             def discard
                 @args = nil
                 @block = nil
@@ -100,9 +84,7 @@ module MangaGet
             @join_cond = ConditionVariable.new
         end
 
-        #
         # Moves the given block and args onto the queue in a new Task object.
-        #
         def schedule(*args, &block)
             task = Task.new(args, &block)
             @queue.enq(task)
@@ -110,41 +92,18 @@ module MangaGet
             task
         end
 
-        #
         # Joins all running threads with tasks until the thread pool is empty.
-        #
         def join
             @mutex.synchronize do
-                begin
-                    # tell join condition to wait until pool is empty
-                    @join_cond.wait(@mutex) unless @threads.empty?
-                rescue Exception => e
-                    # report error
-                    $stderr.puts e
-                    $stderr.puts "Queue contains #{@queue.size} items"
-                    $stderr.puts "ThreadPool contains #{@threads.count} threads"
-                    $stderr.puts "Current thread #{Thread.current} status => " +
-                        "#{Thread.current.status}"
-                    $stderr.puts e.backtrace.join("\n")
-                    @threads.each do |t|
-                        $stderr.puts "Thread #{t} status => #{t.status}"
-                        # ruby 1.8 does not suppot Thread#backtrace
-                        if t.respond_to? :backtrace
-                            $stderr.puts t.backtrace.join("\n")
-                        end
-                    end
-                    # raise error e
-                    raise e
-                end
+                # tell join condition to wait until pool is empty
+                @join_cond.wait(@mutex) unless @threads.empty?
             end
         end
 
         private
 
-        #
         # Processes next item on the queue. Returns true if there was an
         # item to process, false if there was no item
-        #
         def process_queue_next
             return false if @queue.empty?
 
@@ -160,20 +119,16 @@ module MangaGet
             false
         end
 
-        #
         # A thread safe method to access the thread count.
-        #
         def safe_thread_count
             @mutex.synchronize do
                 @threads.count
             end
         end
 
-        #
         # Starts a thread if the current number of threads is not at the max,
         # and passes the thread a block to run the next task from the queue and
         # once the task is complete, remove itself from the set of threads.
-        #
         def start_thread
             @mutex.synchronize do
                 next unless @threads.count < @max_active_threads

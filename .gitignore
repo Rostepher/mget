@@ -1,0 +1,9 @@
+*.gem
+Gemfile.lock
+pkg
+
+# in case an archive goes undeleted
+*.cbz
+*.jpg
+*.jpeg
+*.png

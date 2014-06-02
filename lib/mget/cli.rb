@@ -1,9 +1,11 @@
 require 'optparse'
+
+require_relative 'string'
 require_relative 'version'
 
 module MangaGet
     module CLI
-        SOURCES = [:manga_fox, :manga_here, :manga_panda]
+        SOURCES = [:manga_fox, :manga_here, :manga_panda, :manga_reader]
 
         #
         # Parse command line args and return a hash
@@ -43,12 +45,7 @@ module MangaGet
                     match = /(\d+)(-|\.{2,3})(\d+)/.match(elem)
 
                     if match.nil?
-                        # check if match is a float
-                        if elem.to_s.split('.').length > 1
-                            chapters.push(elem.to_f)
-                        else
-                            chapters.push(elem.to_i)
-                        end
+                        chapters.push(elem.to_n)
                     else
                         lower = match[1].to_i
                         upper = match[3].to_i
@@ -67,7 +64,7 @@ module MangaGet
 
             parser.on("-t", "--threads THREADS", Integer,
                     "Number of manga-get threads, max 16 (default 4)") do |threads|
-                options[:threads] = threads unless threads > 16
+                options[:threads] = threads unless threads > 16 || threads <= 0
             end
 
             parser.on("-d", "--directory DIR",

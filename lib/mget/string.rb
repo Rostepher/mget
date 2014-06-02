@@ -37,6 +37,8 @@ class String
     #
     # @returns [String] titlecased str
     def titlecase
+        return if self.empty?
+
         # traverse each word and upcase all non-small words
         title = self.split(' ').map! do |word|
             if SMALL_WORDS.include?(word.downcase.gsub(/\W/,''))
