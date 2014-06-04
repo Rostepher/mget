@@ -1,4 +1,4 @@
-require_relative 'string'
+require_relative '../string'
 
 module MangaGet
     module Helpers
