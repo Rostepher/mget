@@ -12,6 +12,7 @@ module MangaGet
                     return @cache[:available]
                 end
 
+                p url
                 page = Nokogiri::HTML(open(url))
                 @cache[:available] = \
                     !page.xpath(self.class::CHAPTERS_FROM_SOURCE_XPATH).nil?

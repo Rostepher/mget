@@ -99,14 +99,6 @@ module MangaGet
                 false
             end
 
-            # Always returns nil, as aftv sites, like mangapand don't track
-            # volume numbers in the urls.
-            #
-            # @returns [nil] nil
-            def volume(refresh=false)
-                nil
-            end
-
             # Creates and returns a sorted array of {MangaSite::Page Page}
             # objects for each page in the {Noez::Chapter Chapter}.
             #

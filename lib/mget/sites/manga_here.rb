@@ -11,7 +11,7 @@ module MangaGet
 
         class Chapter < Noez::Chapter
             CHAPTER_FROM_URL_REGEX = /\/c(?<chapter>\d+)/
-            VOLUME_FROM_URL_REGEX = /\/v(?<volume>\d+)/
+            VOLUME_FROM_URL_REGEX = /\/v(?<volume>\d+)\//
             PAGE_COUNT_FROM_SOURCE_REGEX = /var total_pages = (?<page_count>\d+)/
         end
 

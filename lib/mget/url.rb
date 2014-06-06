@@ -8,7 +8,8 @@ module MangaGet
                 p.gsub!(/^\//, '')
 
                 url << p
-                url << '/' unless /\.html/ =~ p
+                url << '/' unless p == parts.last
+                #url << '/' unless /\.html/ =~ p
             end
             url
         end

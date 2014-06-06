@@ -8,6 +8,14 @@ module MangaGet
     class MangaSite
         BASE_URL = nil
 
+        # Returns an instance of {Series} using the name given.
+        #
+        # @params name [String] name of manga series
+        # @returns [Series] manga series
+        def series(name)
+            self.class::Series.new(name, self)
+        end
+
         class Series
             CHAPTERS_FROM_SOURCE_XPATH = nil
             URL_FORMAT_STR = nil
@@ -78,7 +86,7 @@ module MangaGet
             # @returns [String, nil] volume number as a string or nil
             def volume(refresh=false)
                 # return cached value if it exists or refresh is false
-                if @cache.has_key :volume && !refresh
+                if @cache.has_key? :volume && !refresh
                     return @cache[:volume]
                 end
 
@@ -110,6 +118,21 @@ module MangaGet
                 else
                     @cache[:chapter] = match[:chapter]
                 end
+            end
+
+            # Returns the title of the chapter if it exists, otherwise nil.
+            # This method caches the result and will return the cached result
+            # unless the refresh arg is true.
+            #
+            # @param refresh [true, false] force the value to be refreshed
+            # @returns [String, nil] title of the chapter or nil
+            def title(refresh=false)
+                if @cache.has_key? :title && !refresh
+                    return @cache[:title]
+                end
+
+                #TODO
+                raise NotImplementedError
             end
 
             # Returns the total page count of a chapter scraped from the source
