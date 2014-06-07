@@ -18,7 +18,7 @@ module MangaGet
 
             image = "#{File.join(path, name)}.#{ext}"
             open(image, 'wb') do |file|
-                file << open(url).read 
+                file << open(url).read
             end
         end
 

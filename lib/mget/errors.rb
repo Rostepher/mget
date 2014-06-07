@@ -1,40 +1,45 @@
-require_relative 'helpers'
 require_relative 'string'
 
 module MangaGet
     module Errors
         include MangaGet
 
-        class MangaGetBaseError < StandardError
-            def initialize(manga, source)
-                super()
-                @manga = Helpers::fmt_title(manga)
-                @source = Helpers::fmt_title(source.to_s)
+        class MangaLicensedError < StandardError
+            def initialize(series)
+                @series = series
+                @site = @series.site.class::BASE_URL
+            end
+
+            def message
+                manga = @series.name
+                super() + ": \"#{manga}\" is licensed, it is not available from #{@site}"
             end
         end
 
-        class MangaLicensedError < MangaGetBaseError
-            def message
-                super() + ": \"#{@manga}\" is licensed, it is not available from #{@source}"
-            end 
-        end
-
         # Error class that means a manga/manhwa was not available.
-        class MangaNotAvailableError < MangaGetBaseError
+        class MangaNotAvailableError < StandardError
+            def initialize(series)
+                @series = series
+                @site = @series.site.class::BASE_URL
+            end
+
             def message
-                super() + ": \"#{@manga}\" is not available from #{@source}"
+                manga = @series.name
+                super() + ": \"#{@series.name}\" is not available from #{@site}"
             end
         end
 
         # Error class that means a chapter was not available.
-        class ChapterNotAvailableError < MangaGetBaseError
-            def initialize(manga, chapter, source)
-                super(manga, source)
-                @chapter = Helpers::pad(chapter)
+        class ChapterNotAvailableError < StandardError
+            def initialize(chapter)
+                @chapter = chapter
+                @series = @chapter.series
+                @site = @series.site.class::BASE_URL
             end
 
             def message
-                super() + ": \"#{@manga}\":#{@chapter} is not available from #{@source}"
+                manga = @series.name.titlecase
+                super() + ": \"#{manga}\":#{@chapter.chpater} is not available from #{@site}"
             end
         end
     end

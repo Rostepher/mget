@@ -10,13 +10,6 @@ require 'sites/manga_here'
 require 'sites/manga_panda'
 require 'sites/manga_reader'
 
-require 'thread_pool'
-
-# rspec config
-RSpec.configure do |config|
-    config.include MangaGet
-end
-
 # helper methods to create fixtures
 def create_site(options=Hash.new)
     if options.has_key? :site
@@ -38,4 +31,9 @@ end
 def create_chapter(series, options=Hash.new)
     url = options[:url] || URL.join(series.url, '/c001/')
     series.site.class::Chapter.new(series, url)
+end
+
+# rspec config
+RSpec.configure do |config|
+    config.include MangaGet
 end

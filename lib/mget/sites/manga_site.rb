@@ -120,21 +120,6 @@ module MangaGet
                 end
             end
 
-            # Returns the title of the chapter if it exists, otherwise nil.
-            # This method caches the result and will return the cached result
-            # unless the refresh arg is true.
-            #
-            # @param refresh [true, false] force the value to be refreshed
-            # @returns [String, nil] title of the chapter or nil
-            def title(refresh=false)
-                if @cache.has_key? :title && !refresh
-                    return @cache[:title]
-                end
-
-                #TODO
-                raise NotImplementedError
-            end
-
             # Returns the total page count of a chapter scraped from the source
             # page. If there is no match from the source it will return nil. It
             # will cache the value and return the cached value upon future
@@ -182,14 +167,15 @@ module MangaGet
                 @number = number
             end
 
-            # Returns Image object of the image of the page.
+            # Returns Image object of the image of the page or nil if no image
+            # was found.
             #
-            # @returns [MangaGet::Image] image
+            # @returns [MangaGet::Image, nil] image or nil
             def image
                 page = Nokogiri::HTML(open(@url))
                 match = page.xpath(self.class::IMAGE_FROM_SOURCE_XPATH)
 
-                if match.nil?
+                if match.nil? || match.empty?
                     nil
                 else
                     Image.new(match.first[:src])

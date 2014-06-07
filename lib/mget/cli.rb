@@ -13,8 +13,8 @@ module MangaGet
         module_function
         def parse_args
             options = {}
-            parser = OptionParser.new 
-            
+            parser = OptionParser.new
+
             # add options to parser
             parser.banner = "Usage: mget [options] <manga name>"
 
@@ -39,7 +39,7 @@ module MangaGet
             parser.on("-c", "--chapters CHAPTERS", Array,
                     "Chapters to get separated by commas",
                     "   1,2-6,7..9,10...20 donwload chapters 1-20") do |list|
-                
+
                 chapters = Array.new
                 list.each do |elem|
                     match = /(\d+)(-|\.{2,3})(\d+)/.match(elem)
@@ -49,7 +49,7 @@ module MangaGet
                     else
                         lower = match[1].to_i
                         upper = match[3].to_i
-                        
+
                         chapters += if lower <= upper
                             (lower..upper).to_a
                         else
@@ -57,7 +57,7 @@ module MangaGet
                         end
                     end
                 end
-               
+
                 # remove duplicates and sort
                 options[:chapters] = chapters.uniq.sort!
             end
